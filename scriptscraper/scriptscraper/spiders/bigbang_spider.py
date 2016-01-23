@@ -9,14 +9,16 @@ class BigbangSpider(scrapy.Spider):
 	start_urls = ["https://bigbangtrans.wordpress.com/"]
 
 	def parse(self, response):
-		filename = response.url.split("/")[-2] + '.html'
 		episode_urls = response.xpath('//div[@id="pages-2"]/ul/li/a/@href').extract()
-		with open(filename, 'wb') as f:
-			f.write(response.body)
 		for href in episode_urls:
 			url = response.urljoin(href)
 			yield scrapy.Request(url, callback=self.parse_dir_contents)
 
 	def parse_dir_contents(self, response):
-		pass
 		item = BigbangItem()
+		item['episode'] = response.xpath('//h2[@class="title"]/text()').extract()[0]
+		content = []
+		for text in response.xpath('//div[@class="entrytext"]/p/descendant-or-self::text()').extract():
+			content.append(text)
+		item['content'] = content
+		yield item
